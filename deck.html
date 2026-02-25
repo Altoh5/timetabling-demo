@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>University Timetable Scheduler — Explainer Deck</title>
+<style>
+  :root {
+    --bg: #111;
+    --surface: #1a1a1a;
+    --primary: #c41230;
+    --primary-light: rgba(196, 18, 48, 0.15);
+    --text: #e8e8e8;
+    --text-secondary: #999;
+    --border: #333;
+    --accent-blue: #5ba4cf;
+    --accent-green: #6abf69;
+    --accent-purple: #b07cc6;
+    --accent-orange: #e08a5a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+  }
+
+  /* Slide container */
+  .deck {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Navigation */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+  }
+
+  .nav-btn {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .nav-btn:hover {
+    background: #2a2a2a;
+    border-color: #555;
+  }
+
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .slide-counter {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--primary);
+    transition: width 0.3s ease;
+    z-index: 100;
+  }
+
+  /* Slide typography */
+  .slide h1 {
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .slide h2 {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 32px;
+    text-align: left;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .slide h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #fff;
+  }
+
+  .slide .subtitle {
+    font-size: 22px;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 700px;
+    line-height: 1.5;
+  }
+
+  .slide .highlight {
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  /* Slide content areas */
+  .content-area {
+    width: 100%;
+    max-width: 900px;
+    text-align: left;
+  }
+
+  .content-area p {
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+  }
+
+  .content-area ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .content-area ul li {
+    font-size: 20px;
+    line-height: 1.5;
+    padding: 10px 0;
+    padding-left: 28px;
+    position: relative;
+    color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .content-area ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 18px;
+    width: 10px;
+    height: 10px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  .content-area ul li:last-child { border-bottom: none; }
+
+  .content-area ul li .label {
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .content-area ul li .desc {
+    color: var(--text-secondary);
+    font-size: 17px;
+  }
+
+  /* Two column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .col h3 {
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
+
+  .col ul { list-style: none; padding: 0; }
+
+  .col ul li {
+    font-size: 16px;
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+    color: var(--text-secondary);
+  }
+
+  .col ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  .col.hard ul li::before { background: #ff4d4d; }
+  .col.soft ul li::before { background: var(--accent-blue); }
+
+  /* Feature cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .card .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .card h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Stat grid */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 28px;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .stat .number {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat .number.red { color: var(--primary); }
+  .stat .number.blue { color: var(--accent-blue); }
+  .stat .number.green { color: var(--accent-green); }
+  .stat .number.purple { color: var(--accent-purple); }
+
+  .stat .label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 24px;
+  }
+
+  .flow-step {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .flow-step .step-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .flow-step .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .flow-step .step-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+  }
+
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* Comparison table */
+  .comparison {
+    width: 100%;
+    max-width: 900px;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+
+  .comparison th, .comparison td {
+    text-align: left;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+  }
+
+  .comparison th {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .comparison td {
+    background: var(--surface);
+    color: var(--text-secondary);
+  }
+
+  .comparison td:first-child {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .comparison .chosen td {
+    background: rgba(196, 18, 48, 0.08);
+    border-color: rgba(196, 18, 48, 0.3);
+  }
+
+  .comparison .chosen td:first-child {
+    color: var(--primary);
+  }
+
+  /* Title slide extras */
+  .title-badge {
+    display: inline-block;
+    background: var(--primary-light);
+    border: 1px solid rgba(196, 18, 48, 0.3);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ff8a9a;
+    margin-bottom: 24px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .logo-area {
+    margin-bottom: 20px;
+  }
+
+  /* CTA button */
+  .cta-btn {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .cta-btn:hover { background: #a00f28; }
+  .cta-btn:active { transform: scale(0.97); }
+
+  /* Keyboard hint */
+  .keyboard-hint {
+    position: fixed;
+    bottom: 60px;
+    right: 24px;
+    font-size: 11px;
+    color: var(--text-muted);
+    z-index: 99;
+  }
+
+  kbd {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 768px) {
+    .slide { padding: 40px 24px; }
+    .slide h1 { font-size: 32px; }
+    .slide h2 { font-size: 28px; }
+    .slide .subtitle { font-size: 16px; }
+    .content-area ul li { font-size: 16px; }
+    .two-col { grid-template-columns: 1fr; }
+    .card-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .flow { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<div class="deck" id="deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide active" id="slide-1">
+    <div class="logo-area">
+      <svg width="160" height="54" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 30.5C2 30.5 4.5 33 10 33C15.5 33 18 30.5 18 27.5C18 24.5 15.5 23 10 21.5C4.5 20 2 18.5 2 15C2 11.5 5 8.5 10.5 8.5C16 8.5 18.5 11 18.5 11" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <rect x="25" y="14" width="4" height="19" rx="0.5" fill="white"/>
+        <rect x="24" y="7.5" width="6" height="6" rx="0.5" fill="#C41230"/>
+        <path d="M36 9L52 9" stroke="white" stroke-width="4" stroke-linecap="round"/>
+        <rect x="42" y="9" width="4" height="24" rx="0.5" fill="white"/>
+        <text x="60" y="14" fill="rgba(255,255,255,0.9)" font-family="-apple-system, sans-serif" font-size="7" font-weight="600" letter-spacing="0.5">SINGAPORE</text>
+        <text x="60" y="23" fill="rgba(255,255,255,0.9)" font-family="-apple-system, sans-serif" font-size="7" font-weight="600" letter-spacing="0.5">INSTITUTE OF</text>
+        <text x="60" y="32" fill="rgba(255,255,255,0.9)" font-family="-apple-system, sans-serif" font-size="7" font-weight="600" letter-spacing="0.5">TECHNOLOGY</text>
+      </svg>
+    </div>
+    <div class="title-badge">Technical Demo</div>
+    <h1>University Timetable<br>Scheduler</h1>
+    <p class="subtitle">An intelligent scheduling system that automatically generates conflict-free class timetables with optimization for room utilization and lecturer preferences.</p>
+    <a href="index.html" class="cta-btn">Launch Demo</a>
+  </div>
+
+  <!-- Slide 2: The Problem -->
+  <div class="slide" id="slide-2">
+    <h2>The Problem</h2>
+    <div class="content-area">
+      <p>University timetabling is a constraint satisfaction problem. You need to assign classes to rooms and time slots while juggling multiple competing requirements:</p>
+      <ul>
+        <li>
+          <span class="label">Room conflicts</span><br>
+          <span class="desc">Two classes can't use the same room at the same time</span>
+        </li>
+        <li>
+          <span class="label">Lecturer conflicts</span><br>
+          <span class="desc">A lecturer can't teach two classes simultaneously</span>
+        </li>
+        <li>
+          <span class="label">Room compatibility</span><br>
+          <span class="desc">Lab courses need lab rooms. Lecture courses need lecture halls.</span>
+        </li>
+        <li>
+          <span class="label">Capacity constraints</span><br>
+          <span class="desc">100 students can't fit in a 30-seat room</span>
+        </li>
+        <li>
+          <span class="label">Preferences</span><br>
+          <span class="desc">Lecturers prefer certain hours. Classes should spread across the week.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 3: By the Numbers -->
+  <div class="slide" id="slide-3">
+    <h2>Demo Scale</h2>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="number red">14</div>
+        <div class="label">Courses</div>
+      </div>
+      <div class="stat">
+        <div class="number blue">6</div>
+        <div class="label">Rooms</div>
+      </div>
+      <div class="stat">
+        <div class="number green">6</div>
+        <div class="label">Lecturers</div>
+      </div>
+      <div class="stat">
+        <div class="number purple">34</div>
+        <div class="label">Sessions/Week</div>
+      </div>
+    </div>
+    <div class="content-area">
+      <p style="text-align: center;">Three room types (lecture halls, seminar rooms, labs), sessions from 1–2 hours, spread across Monday–Friday, 8 AM to 6 PM.</p>
+    </div>
+  </div>
+
+  <!-- Slide 4: Algorithm -->
+  <div class="slide" id="slide-4">
+    <h2>Two-Phase Algorithm</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">Phase 1</div>
+        <div class="step-title">Sort Courses</div>
+        <div class="step-desc">Most constrained first: labs, then seminars, then lectures. Larger enrollment first.</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-num">Phase 1</div>
+        <div class="step-title">Greedy Place</div>
+        <div class="step-desc">For each session, evaluate all valid slots. Pick the one with the highest soft score.</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-num">Phase 2</div>
+        <div class="step-title">Local Search</div>
+        <div class="step-desc">Find worst-scoring entry. Try all alternatives. Swap if improvement found. Repeat up to 100x.</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-num">Result</div>
+        <div class="step-title">Optimized Schedule</div>
+        <div class="step-desc">Conflict-free timetable with maximized quality score.</div>
+      </div>
+    </div>
+    <div class="content-area">
+      <p style="text-align: center; font-size: 16px;">Runs in under 50ms for the demo dataset. Scales to hundreds of courses before noticeable delay.</p>
+    </div>
+  </div>
+
+  <!-- Slide 5: Constraints -->
+  <div class="slide" id="slide-5">
+    <h2>Constraint System</h2>
+    <div class="two-col">
+      <div class="col hard">
+        <h3 style="color: #ff4d4d;">Hard Constraints</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">Never violated. If unsatisfiable, course is flagged.</p>
+        <ul>
+          <li>No room double-booking</li>
+          <li>No lecturer double-booking</li>
+          <li>Room type must match course requirement</li>
+          <li>Room capacity &ge; enrolled students</li>
+          <li>Session fits within 8 AM – 6 PM</li>
+          <li>Lecturer max hours/day not exceeded</li>
+        </ul>
+      </div>
+      <div class="col soft">
+        <h3 style="color: var(--accent-blue);">Soft Constraints</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">Optimized via weighted scoring. Tunable 1–10.</p>
+        <ul>
+          <li><strong>Room Fit</strong> — minimize wasted seats</li>
+          <li><strong>Lecturer Pref</strong> — respect preferred hours</li>
+          <li><strong>Spread</strong> — distribute sessions across days</li>
+          <li><strong>No Back-to-Back</strong> — give lecturers breaks</li>
+        </ul>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 14px;">Adjust weights and regenerate to explore trade-offs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Why This Algorithm? -->
+  <div class="slide" id="slide-6">
+    <h2>Algorithm Selection</h2>
+    <table class="comparison">
+      <tr>
+        <th>Approach</th>
+        <th>Speed</th>
+        <th>Quality</th>
+        <th>Complexity</th>
+      </tr>
+      <tr class="chosen">
+        <td>Greedy + Local Search</td>
+        <td>Near-instant</td>
+        <td>Good for demo scale</td>
+        <td>Low (~200 LOC)</td>
+      </tr>
+      <tr>
+        <td>CSP / Backtracking</td>
+        <td>Exponential worst-case</td>
+        <td>Guaranteed optimal</td>
+        <td>Medium</td>
+      </tr>
+      <tr>
+        <td>Genetic Algorithm</td>
+        <td>Slow convergence</td>
+        <td>Explores widely</td>
+        <td>High</td>
+      </tr>
+    </table>
+    <div class="content-area">
+      <p style="font-size: 16px;">Greedy + Local Search was chosen for its simplicity, speed, and deterministic results. The "most-constrained-first" heuristic (scheduling labs before lectures) prevents the most common failure mode: easy courses consuming scarce resources.</p>
+    </div>
+  </div>
+
+  <!-- Slide 7: Features -->
+  <div class="slide" id="slide-7">
+    <h2>Key Features</h2>
+    <div class="card-grid">
+      <div class="card">
+        <span class="icon" style="color: var(--primary);">&#9638;</span>
+        <h4>Three Views</h4>
+        <p>Weekly grid overview, per-room schedule, and per-lecturer schedule with dropdown selectors.</p>
+      </div>
+      <div class="card">
+        <span class="icon" style="color: var(--accent-blue);">&#9998;</span>
+        <h4>Full CRUD</h4>
+        <p>Add, edit, and delete rooms, lecturers, and courses through sidebar forms.</p>
+      </div>
+      <div class="card">
+        <span class="icon" style="color: var(--accent-green);">&#9881;</span>
+        <h4>Weight Tuning</h4>
+        <p>Four sliders control soft constraint priorities. Regenerate to see the impact.</p>
+      </div>
+      <div class="card">
+        <span class="icon" style="color: var(--accent-purple);">&#128270;</span>
+        <h4>Course Inspection</h4>
+        <p>Click any course block to highlight all sessions and view detail panel with scores.</p>
+      </div>
+      <div class="card">
+        <span class="icon" style="color: var(--accent-orange);">&#9888;</span>
+        <h4>Conflict Warnings</h4>
+        <p>Courses that can't be scheduled appear in a prominent warning banner.</p>
+      </div>
+      <div class="card">
+        <span class="icon" style="color: #ff8a9a;">&#9733;</span>
+        <h4>Quality Score</h4>
+        <p>Total optimization score and room utilization percentage displayed in real-time.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: UI Design -->
+  <div class="slide" id="slide-8">
+    <h2>Interface Design</h2>
+    <div class="content-area">
+      <ul>
+        <li>
+          <span class="label">Dark theme with SIT branding</span><br>
+          <span class="desc">Professional institutional look with charcoal backgrounds and SIT red (#C41230) accents</span>
+        </li>
+        <li>
+          <span class="label">CSS Grid layout</span><br>
+          <span class="desc">Responsive two-column layout: 300px sidebar + flexible main area. Timetable grid dynamically sized.</span>
+        </li>
+        <li>
+          <span class="label">Color-coded course blocks</span><br>
+          <span class="desc">10 distinct colors auto-assigned. Multi-hour sessions render as taller blocks spanning grid rows.</span>
+        </li>
+        <li>
+          <span class="label">Hover tooltips &amp; click panels</span><br>
+          <span class="desc">Hover for quick info. Click for full detail panel with all sessions and average quality score.</span>
+        </li>
+        <li>
+          <span class="label">Zero dependencies</span><br>
+          <span class="desc">Single HTML file. No frameworks, no CDN, no build tools. Open in any modern browser.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 9: Design Decisions -->
+  <div class="slide" id="slide-9">
+    <h2>Design Decisions</h2>
+    <div class="content-area">
+      <ul>
+        <li>
+          <span class="label">Single file architecture</span><br>
+          <span class="desc">Zero deployment friction — host anywhere, share via URL or file transfer</span>
+        </li>
+        <li>
+          <span class="label">In-memory state, no persistence</span><br>
+          <span class="desc">Sample data reloads on every visit for consistent demo. Could add localStorage if needed.</span>
+        </li>
+        <li>
+          <span class="label">Higher default spread weight (8 vs 5)</span><br>
+          <span class="desc">Counteracts greedy algorithm's tendency to cluster sessions early in the week</span>
+        </li>
+        <li>
+          <span class="label">XSS sanitization on all user input</span><br>
+          <span class="desc">escapeHtml() prevents injection even in a demo app — good practice by default</span>
+        </li>
+        <li>
+          <span class="label">Referential integrity on lecturer delete</span><br>
+          <span class="desc">Courses set to "Unassigned" rather than keeping stale references that crash scheduling</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 10: Thank you -->
+  <div class="slide" id="slide-10">
+    <div class="title-badge">Demo</div>
+    <h1>Try It Live</h1>
+    <p class="subtitle">Open the timetable scheduler, modify the data, adjust the constraint weights, and generate your own optimized schedule.</p>
+    <div style="display: flex; gap: 16px; margin-top: 20px;">
+      <a href="index.html" class="cta-btn">Launch Scheduler</a>
+      <a href="documentation.html" class="cta-btn" style="background: var(--surface); border: 1px solid var(--border);">View Documentation</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prev-btn" disabled>&larr; Previous</button>
+  <span class="slide-counter" id="counter">1 / 10</span>
+  <button class="nav-btn" id="next-btn">Next &rarr;</button>
+</div>
+
+<div class="keyboard-hint">
+  <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or click to navigate
+</div>
+
+<script>
+  const totalSlides = 10;
+  let current = 1;
+
+  function showSlide(n) {
+    if (n < 1 || n > totalSlides) return;
+    document.querySelector('.slide.active').classList.remove('active');
+    document.getElementById('slide-' + n).classList.add('active');
+    current = n;
+
+    document.getElementById('counter').textContent = current + ' / ' + totalSlides;
+    document.getElementById('prev-btn').disabled = current === 1;
+    document.getElementById('next-btn').disabled = current === totalSlides;
+    document.getElementById('progress').style.width = (current / totalSlides * 100) + '%';
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => showSlide(current - 1));
+  document.getElementById('next-btn').addEventListener('click', () => showSlide(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); showSlide(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); showSlide(current - 1); }
+    if (e.key === 'Home') { e.preventDefault(); showSlide(1); }
+    if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides); }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) showSlide(current + 1);
+      else showSlide(current - 1);
+    }
+  });
+
+  // Init
+  showSlide(1);
+</script>
+
+</body>
+</html>

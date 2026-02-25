@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>University Timetable Scheduler — Documentation</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --border: #3a3a3a;
+    --primary: #c41230;
+    --text: #e8e8e8;
+    --text-secondary: #999;
+    --text-muted: #666;
+    --code-bg: #2a2a2a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  .doc-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .doc-header {
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+  }
+
+  .doc-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .doc-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+  }
+
+  .back-link {
+    display: inline-block;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+
+  nav.toc h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  nav.toc ol {
+    padding-left: 20px;
+  }
+
+  nav.toc li {
+    margin-bottom: 6px;
+  }
+
+  nav.toc a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  nav.toc a:hover { color: var(--primary); }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 28px;
+    margin-bottom: 10px;
+    color: #fff;
+  }
+
+  p { margin-bottom: 12px; }
+
+  ul, ol {
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+
+  li { margin-bottom: 6px; }
+
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    color: #ff8a9a;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+
+  th {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  td { background: var(--surface); }
+
+  .callout {
+    background: rgba(196, 18, 48, 0.08);
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .callout strong { color: #ff8a9a; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .feature-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #fff;
+  }
+
+  .feature-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+  }
+
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  @media (max-width: 640px) {
+    .feature-grid { grid-template-columns: 1fr; }
+    .doc-header h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-wrapper">
+
+  <a href="index.html" class="back-link">&larr; Back to Timetable Scheduler</a>
+
+  <div class="doc-header">
+    <h1>University Timetable Scheduler</h1>
+    <div class="subtitle">Technical Documentation &amp; Feature Reference</div>
+  </div>
+
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#data-model">Data Model</a></li>
+      <li><a href="#algorithm">Scheduling Algorithm</a></li>
+      <li><a href="#constraints">Constraint System</a></li>
+      <li><a href="#ui">User Interface</a></li>
+      <li><a href="#interactions">Interactions</a></li>
+      <li><a href="#considerations">Design Considerations</a></li>
+      <li><a href="#sample-data">Sample Data</a></li>
+      <li><a href="#technical">Technical Details</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. Overview -->
+  <h2 id="overview">1. Overview</h2>
+  <p>
+    The University Timetable Scheduler is a browser-based application that automatically generates
+    conflict-free class schedules for a university department. It uses a two-phase optimization
+    algorithm — greedy placement followed by local search — to produce high-quality timetables
+    that respect hard constraints and optimize soft preferences.
+  </p>
+  <p>
+    The system is designed for demo scale: a single department with 14 courses, 6 rooms,
+    and 6 lecturers scheduling across a Monday–Friday week from 8 AM to 6 PM.
+  </p>
+
+  <div class="callout">
+    <strong>Key design goal:</strong> A fully self-contained single HTML file with no external
+    dependencies. Runs entirely in the browser — no server, no database, no build tools.
+  </div>
+
+  <!-- 2. Features -->
+  <h2 id="features">2. Features</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>Automatic Scheduling</h4>
+      <p>One-click generation of conflict-free timetables using greedy placement + local search optimization.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Three Timetable Views</h4>
+      <p>Weekly Grid (all classes), By Room (single room's schedule), By Lecturer (single lecturer's schedule).</p>
+    </div>
+    <div class="feature-card">
+      <h4>Full CRUD Management</h4>
+      <p>Add, edit, and delete rooms, lecturers, and courses through the sidebar forms.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Constraint Tuning</h4>
+      <p>Adjustable weight sliders (1–10) for soft constraints — room fit, lecturer preference, spread, and no back-to-back.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Interactive Course Selection</h4>
+      <p>Click any course block to highlight all its sessions and view a detail panel with schedule info and scores.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Quality Metrics</h4>
+      <p>Displays total quality score, room utilization percentage, and warnings for unschedulable courses.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Hover Tooltips</h4>
+      <p>Hover over any class block to see course name, room details, lecturer, enrollment, and soft score.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Color-Coded Legend</h4>
+      <p>Each course gets a unique color. A legend below the timetable maps colors to course names.</p>
+    </div>
+  </div>
+
+  <!-- 3. Data Model -->
+  <h2 id="data-model">3. Data Model</h2>
+  <p>All data lives in-memory as a centralized <code>state</code> JavaScript object. There is no persistence — refreshing the page resets to sample data.</p>
+
+  <h3>Entities</h3>
+  <table>
+    <tr><th>Entity</th><th>Fields</th></tr>
+    <tr><td>Room</td><td><code>id</code>, <code>name</code>, <code>capacity</code>, <code>type</code> (lecture / lab / seminar)</td></tr>
+    <tr><td>Lecturer</td><td><code>id</code>, <code>name</code>, <code>prefStart</code>, <code>prefEnd</code>, <code>maxHoursPerDay</code></td></tr>
+    <tr><td>Course</td><td><code>id</code>, <code>name</code>, <code>enrolled</code>, <code>roomType</code>, <code>sessionsPerWeek</code>, <code>hoursPerSession</code>, <code>lecturerId</code></td></tr>
+    <tr><td>Schedule Entry</td><td><code>courseId</code>, <code>sessionIndex</code>, <code>roomId</code>, <code>day</code>, <code>startHour</code>, <code>duration</code>, <code>softScore</code></td></tr>
+  </table>
+
+  <h3>State Object</h3>
+  <pre>state = {
+  rooms: [...],           // Array of Room objects
+  lecturers: [...],       // Array of Lecturer objects
+  courses: [...],         // Array of Course objects
+  schedule: [...],        // Generated schedule entries
+  currentView: 'grid',   // Active view: 'grid' | 'room' | 'lecturer'
+  selectedCourse: null,   // Currently clicked course ID
+  weights: {              // Soft constraint weights (1-10)
+    roomFit: 5,
+    lecturerPref: 5,
+    spread: 8,
+    noBackToBack: 5
+  },
+  totalScore: 0,          // Sum of all soft scores
+  unscheduled: []         // Sessions that couldn't be placed
+}</pre>
+
+  <!-- 4. Algorithm -->
+  <h2 id="algorithm">4. Scheduling Algorithm</h2>
+
+  <h3>Phase 1: Greedy Placement</h3>
+  <p>Courses are sorted by scheduling difficulty (most constrained first), then placed one session at a time into the best available slot.</p>
+
+  <div class="diagram">Courses sorted by difficulty
+         │
+    ┌────▼────┐
+    │ Lab     │  (fewest compatible rooms)
+    │ Seminar │  (medium constraints)
+    │ Lecture │  (most flexible)
+    └────┬────┘
+         │
+    For each course, for each session:
+         │
+    ┌────▼────────────────────────┐
+    │ Generate all valid          │
+    │ (room, day, hour) combos   │
+    │ that pass hard constraints  │
+    └────┬────────────────────────┘
+         │
+    ┌────▼────────────────────────┐
+    │ Score each combo against    │
+    │ soft constraints            │
+    │ Pick highest-scoring slot   │
+    └────┬────────────────────────┘
+         │
+    ┌────▼────────────────────────┐
+    │ Place class in schedule     │
+    │ (or flag as unscheduled)    │
+    └─────────────────────────────┘</div>
+
+  <p><strong>Sorting priority:</strong></p>
+  <ol>
+    <li>Room type — labs first (fewest rooms), then seminars, then lectures</li>
+    <li>Enrollment size — larger classes first (fewer rooms can fit them)</li>
+    <li>Sessions per week — courses needing more sessions are harder to fit</li>
+  </ol>
+
+  <h3>Phase 2: Local Search</h3>
+  <p>After the greedy phase, the algorithm runs up to 100 iterations of local search to improve the soft constraint score:</p>
+  <ol>
+    <li>Find the scheduled entry with the <strong>lowest soft score</strong></li>
+    <li>Temporarily remove it from the schedule</li>
+    <li>Try all valid alternative (day, room, hour) placements</li>
+    <li>If a better placement exists, swap it in</li>
+    <li>Stop when no improvement is found or iteration limit reached</li>
+  </ol>
+
+  <div class="callout">
+    <strong>Performance:</strong> The algorithm runs near-instantly for demo scale (~14 courses, 5 days, 10 hours).
+    Each greedy placement evaluates at most 5 days × 6 rooms × 10 hours = 300 candidate slots per session.
+    Local search adds at most 100 × 300 evaluations. Total: well under 100,000 operations.
+  </div>
+
+  <!-- 5. Constraints -->
+  <h2 id="constraints">5. Constraint System</h2>
+
+  <h3>Hard Constraints (always enforced)</h3>
+  <p>These are never violated. If no valid slot satisfies all hard constraints, the session is flagged as unscheduled.</p>
+  <table>
+    <tr><th>Constraint</th><th>Description</th></tr>
+    <tr><td>No room double-booking</td><td>Two classes cannot occupy the same room at overlapping times. Uses interval overlap check: <code>start1 &lt; end2 AND start2 &lt; end1</code></td></tr>
+    <tr><td>No lecturer double-booking</td><td>A lecturer cannot teach two classes at overlapping times</td></tr>
+    <tr><td>Room type match</td><td>A course requiring a "lab" room can only be placed in a lab-type room</td></tr>
+    <tr><td>Room capacity</td><td>Room capacity must be ≥ the number of enrolled students</td></tr>
+    <tr><td>Schedule bounds</td><td>Class must fit within 8 AM – 6 PM (start + duration ≤ 18)</td></tr>
+    <tr><td>Lecturer max hours/day</td><td>A lecturer's total teaching hours on a single day cannot exceed their configured maximum</td></tr>
+  </table>
+
+  <h3>Soft Constraints (optimized via scoring)</h3>
+  <p>Each soft constraint has a configurable weight (1–10) that controls how much it influences placement decisions. Higher weight = stronger preference.</p>
+  <table>
+    <tr><th>Constraint</th><th>Weight Slider</th><th>Scoring Formula</th></tr>
+    <tr>
+      <td>Room Fit</td>
+      <td>Room Fit (default: 5)</td>
+      <td><code>weight × (1 - (capacity - enrolled) / capacity)</code><br>Penalizes oversized rooms. Perfect fit = full score.</td>
+    </tr>
+    <tr>
+      <td>Lecturer Preference</td>
+      <td>Lecturer Pref (default: 5)</td>
+      <td><code>+weight</code> if the entire session falls within the lecturer's preferred time window, <code>0</code> otherwise.</td>
+    </tr>
+    <tr>
+      <td>Spread</td>
+      <td>Spread (default: 8)</td>
+      <td><code>-weight × count</code> where count = number of same-course sessions already on that day. Distributes sessions across the week.</td>
+    </tr>
+    <tr>
+      <td>No Back-to-Back</td>
+      <td>No Back-to-Back (default: 5)</td>
+      <td><code>-weight</code> for each adjacent session by the same lecturer on the same day. Gives lecturers breaks between classes.</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <strong>Trade-off exploration:</strong> Adjust the weight sliders and regenerate to see how different priorities
+    produce different timetables. For example, maxing "Spread" distributes sessions evenly across all 5 days,
+    while maxing "Room Fit" minimizes wasted seats.
+  </div>
+
+  <!-- 6. UI -->
+  <h2 id="ui">6. User Interface</h2>
+
+  <h3>Layout</h3>
+  <p>The app uses a CSS Grid layout with two columns and two rows:</p>
+  <div class="diagram">┌──────────────────────────────────────────────────┐
+│                    TOP BAR                       │
+│  [SIT Logo] [Title]  [Generate] [Views] [Score]  │
+├────────────┬─────────────────────────────────────┤
+│            │                                     │
+│  SIDEBAR   │           MAIN AREA                 │
+│  300px     │           (flexible)                │
+│            │                                     │
+│  [Tabs]    │  ┌─────────────────────────────┐    │
+│  Rooms     │  │     TIMETABLE GRID          │    │
+│  Lecturers │  │     Mon  Tue  Wed  Thu  Fri │    │
+│  Courses   │  │  8  ┌──┐          ┌──┐      │    │
+│            │  │  9  │CS│     ┌──┐ │DB│      │    │
+│  ─────────  │  │ 10  └──┘     │AI│ └──┘      │    │
+│  SETTINGS  │  │ 11         └──┘           │    │
+│  [Sliders] │  │  ...                        │    │
+│            │  └─────────────────────────────┘    │
+│            │  [Color Legend]                      │
+└────────────┴─────────────────────────────────────┘</div>
+
+  <h3>Sidebar Tabs</h3>
+  <ul>
+    <li><strong>Rooms:</strong> Name, capacity, type (lecture/lab/seminar). Add/edit/delete.</li>
+    <li><strong>Lecturers:</strong> Name, preferred start/end hours, max hours/day. Add/edit/delete.</li>
+    <li><strong>Courses:</strong> Name, enrollment, room type, sessions/week, hours/session, assigned lecturer. Add/edit/delete.</li>
+  </ul>
+
+  <h3>Three Timetable Views</h3>
+  <table>
+    <tr><th>View</th><th>Shows</th><th>Use Case</th></tr>
+    <tr><td>Weekly Grid</td><td>All scheduled classes across all rooms</td><td>Full overview of the week</td></tr>
+    <tr><td>By Room</td><td>One room's schedule (dropdown selector)</td><td>Check if a room is available at specific times</td></tr>
+    <tr><td>By Lecturer</td><td>One lecturer's schedule (dropdown selector)</td><td>Review a lecturer's teaching load and gaps</td></tr>
+  </table>
+
+  <h3>Top Bar Controls</h3>
+  <ul>
+    <li><strong>Generate Timetable</strong> — Runs the scheduling algorithm and renders results</li>
+    <li><strong>View toggle buttons</strong> — Switch between Weekly Grid, By Room, By Lecturer</li>
+    <li><strong>Quality Score</strong> — Total soft constraint score (higher = better)</li>
+    <li><strong>Utilization</strong> — Rooms used and average capacity utilization percentage</li>
+  </ul>
+
+  <!-- 7. Interactions -->
+  <h2 id="interactions">7. Interactions</h2>
+
+  <h3>Course Block Click</h3>
+  <p>Clicking any course block on the timetable grid triggers the following:</p>
+  <ol>
+    <li>All blocks for that course get highlighted with a white border and glow</li>
+    <li>All other course blocks are dimmed to 30% opacity</li>
+    <li>A detail panel slides in from the right showing:
+      <ul>
+        <li>Course color swatch and name</li>
+        <li>Assigned lecturer</li>
+        <li>Enrollment count</li>
+        <li>Required room type</li>
+        <li>Sessions per week</li>
+        <li>Average soft score</li>
+        <li>List of all scheduled sessions (day, time, room)</li>
+      </ul>
+    </li>
+    <li>Clicking the same block again, clicking elsewhere, or clicking the close button deselects</li>
+  </ol>
+
+  <h3>Hover Tooltips</h3>
+  <p>Hovering over any class block displays a tooltip with course name, room name and capacity, lecturer name, enrollment count, and individual session soft score.</p>
+
+  <h3>Constraint Weight Tuning</h3>
+  <p>The Settings section at the bottom of the sidebar provides four sliders (1–10). After adjusting weights, click "Generate Timetable" again to see a new schedule reflecting the updated priorities.</p>
+
+  <!-- 8. Considerations -->
+  <h2 id="considerations">8. Design Considerations</h2>
+
+  <h3>Why Greedy + Local Search?</h3>
+  <p>Three algorithmic approaches were evaluated:</p>
+  <table>
+    <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+    <tr>
+      <td>Greedy + Local Search</td>
+      <td>Fast, deterministic, easy to debug, good results at demo scale</td>
+      <td>May miss global optimum on very large inputs</td>
+    </tr>
+    <tr>
+      <td>CSP with Backtracking</td>
+      <td>Guarantees finding a solution if one exists</td>
+      <td>Exponential worst case, harder to incorporate soft constraints</td>
+    </tr>
+    <tr>
+      <td>Genetic Algorithm</td>
+      <td>Can explore wider solution space</td>
+      <td>Non-deterministic, slow convergence, over-engineered for demo scale</td>
+    </tr>
+  </table>
+  <p>Greedy + Local Search was chosen because it runs near-instantly at demo scale, produces good-quality results, and keeps the code simple and maintainable.</p>
+
+  <h3>Why a Single HTML File?</h3>
+  <ul>
+    <li><strong>Zero deployment friction</strong> — Open the file in any browser, or host on any static server (GitHub Pages, S3)</li>
+    <li><strong>No build tools</strong> — No npm, webpack, or bundler setup required</li>
+    <li><strong>Fully portable</strong> — Email it, put it on a USB drive, or share a link</li>
+    <li><strong>Self-contained</strong> — No CDN dependencies that could break or go offline</li>
+  </ul>
+
+  <h3>Why In-Memory State Only?</h3>
+  <ul>
+    <li>Demo-scale application does not need persistence</li>
+    <li>Avoids complexity of localStorage serialization or backend databases</li>
+    <li>Sample data reloads on every page load for consistent demo experience</li>
+    <li>If persistence were needed, localStorage could be added with minimal changes</li>
+  </ul>
+
+  <h3>Most-Constrained-First Ordering</h3>
+  <p>Lab courses are scheduled first because they have the fewest compatible rooms. This prevents situations where easy-to-schedule lecture courses consume lab timeslots, leaving lab courses with no options. This is a well-known heuristic in constraint satisfaction called the "most constrained variable" or "fail-first" principle.</p>
+
+  <h3>Overlap Detection Formula</h3>
+  <p>The system uses the standard interval overlap check: two time intervals <code>[start1, end1)</code> and <code>[start2, end2)</code> overlap if and only if <code>start1 &lt; end2 AND start2 &lt; end1</code>. This cleanly handles both partial and full overlaps, as well as multi-hour sessions.</p>
+
+  <h3>XSS Protection</h3>
+  <p>All user-provided text (room names, lecturer names, course names) is sanitized through <code>escapeHtml()</code> before being inserted into the DOM. This prevents cross-site scripting attacks from maliciously crafted input.</p>
+
+  <h3>Referential Integrity</h3>
+  <p>When a lecturer is deleted, all courses assigned to that lecturer have their <code>lecturerId</code> set to <code>null</code> (displayed as "Unassigned") rather than keeping a stale reference. This prevents crashes during scheduling when the algorithm tries to look up a deleted lecturer.</p>
+
+  <h3>Default Spread Weight</h3>
+  <p>The spread weight defaults to 8 (higher than other weights at 5) to ensure classes distribute across all five weekdays. Without this bias, the greedy algorithm tends to cluster sessions on Monday–Wednesday due to the natural iteration order.</p>
+
+  <!-- 9. Sample Data -->
+  <h2 id="sample-data">9. Sample Data</h2>
+
+  <h3>Rooms (6)</h3>
+  <table>
+    <tr><th>Name</th><th>Capacity</th><th>Type</th></tr>
+    <tr><td>Hall A</td><td>120</td><td>Lecture</td></tr>
+    <tr><td>Hall B</td><td>80</td><td>Lecture</td></tr>
+    <tr><td>Room 101</td><td>40</td><td>Seminar</td></tr>
+    <tr><td>Room 102</td><td>30</td><td>Seminar</td></tr>
+    <tr><td>Lab 1</td><td>25</td><td>Lab</td></tr>
+    <tr><td>Lab 2</td><td>30</td><td>Lab</td></tr>
+  </table>
+
+  <h3>Lecturers (6)</h3>
+  <table>
+    <tr><th>Name</th><th>Preferred Hours</th><th>Max Hours/Day</th></tr>
+    <tr><td>Dr. Smith</td><td>8 AM – 12 PM</td><td>6</td></tr>
+    <tr><td>Prof. Lee</td><td>12 PM – 5 PM</td><td>6</td></tr>
+    <tr><td>Dr. Patel</td><td>9 AM – 2 PM</td><td>6</td></tr>
+    <tr><td>Prof. Garcia</td><td>8 AM – 6 PM</td><td>6</td></tr>
+    <tr><td>Dr. Chen</td><td>10 AM – 4 PM</td><td>6</td></tr>
+    <tr><td>Prof. Wong</td><td>8 AM – 2 PM</td><td>6</td></tr>
+  </table>
+
+  <h3>Courses (14)</h3>
+  <table>
+    <tr><th>Course</th><th>Students</th><th>Type</th><th>Sessions</th><th>Hrs</th><th>Lecturer</th></tr>
+    <tr><td>Intro to CS</td><td>100</td><td>Lecture</td><td>3/wk</td><td>1</td><td>Dr. Smith</td></tr>
+    <tr><td>Data Structures</td><td>75</td><td>Lecture</td><td>3/wk</td><td>1</td><td>Prof. Lee</td></tr>
+    <tr><td>Algorithms</td><td>60</td><td>Lecture</td><td>3/wk</td><td>1</td><td>Dr. Smith</td></tr>
+    <tr><td>Database Systems</td><td>35</td><td>Seminar</td><td>2/wk</td><td>2</td><td>Dr. Patel</td></tr>
+    <tr><td>AI Fundamentals</td><td>30</td><td>Seminar</td><td>3/wk</td><td>1</td><td>Prof. Garcia</td></tr>
+    <tr><td>Programming Lab</td><td>20</td><td>Lab</td><td>3/wk</td><td>2</td><td>Prof. Lee</td></tr>
+    <tr><td>Web Development</td><td>25</td><td>Lab</td><td>2/wk</td><td>2</td><td>Dr. Patel</td></tr>
+    <tr><td>Software Eng</td><td>40</td><td>Seminar</td><td>3/wk</td><td>1</td><td>Prof. Garcia</td></tr>
+    <tr><td>Computer Networks</td><td>70</td><td>Lecture</td><td>2/wk</td><td>1</td><td>Dr. Chen</td></tr>
+    <tr><td>Operating Systems</td><td>65</td><td>Lecture</td><td>2/wk</td><td>1</td><td>Prof. Wong</td></tr>
+    <tr><td>Cybersecurity</td><td>35</td><td>Seminar</td><td>2/wk</td><td>1</td><td>Dr. Chen</td></tr>
+    <tr><td>Machine Learning</td><td>28</td><td>Lab</td><td>2/wk</td><td>2</td><td>Prof. Wong</td></tr>
+    <tr><td>Cloud Computing</td><td>30</td><td>Seminar</td><td>2/wk</td><td>1</td><td>Dr. Chen</td></tr>
+    <tr><td>Mobile App Dev</td><td>22</td><td>Lab</td><td>2/wk</td><td>2</td><td>Prof. Garcia</td></tr>
+  </table>
+
+  <!-- 10. Technical -->
+  <h2 id="technical">10. Technical Details</h2>
+
+  <h3>Technology Stack</h3>
+  <ul>
+    <li><strong>HTML5</strong> — Semantic markup, form elements</li>
+    <li><strong>CSS3</strong> — CSS Grid layout, CSS custom properties (variables), transitions, animations, pseudo-element tooltips</li>
+    <li><strong>Vanilla JavaScript</strong> — No frameworks or libraries</li>
+    <li><strong>Inline SVG</strong> — SIT logo rendered as embedded SVG</li>
+  </ul>
+
+  <h3>Browser Compatibility</h3>
+  <p>Requires a modern browser with support for CSS Grid, CSS custom properties, and ES6+ JavaScript. Tested on Chrome, Firefox, Safari, and Edge.</p>
+
+  <h3>File Structure</h3>
+  <pre>timetabling_demo/
+├── index.html           # Main application (single file, ~1870 lines)
+├── documentation.html   # This documentation page
+└── deck.html           # Explainer presentation deck</pre>
+
+  <h3>Key Functions</h3>
+  <table>
+    <tr><th>Function</th><th>Purpose</th></tr>
+    <tr><td><code>generateSchedule()</code></td><td>Greedy placement phase — sorts courses and places sessions</td></tr>
+    <tr><td><code>localSearch(schedule, 100)</code></td><td>Optimization phase — improves worst-scoring entries</td></tr>
+    <tr><td><code>isValid(...)</code></td><td>Hard constraint checker — returns true/false</td></tr>
+    <tr><td><code>softScore(...)</code></td><td>Soft constraint scorer — returns numeric quality score</td></tr>
+    <tr><td><code>renderFilteredGrid(...)</code></td><td>Shared grid renderer used by all three views</td></tr>
+    <tr><td><code>selectCourse(id)</code></td><td>Highlights course blocks and shows detail panel</td></tr>
+    <tr><td><code>escapeHtml(str)</code></td><td>XSS sanitization for user-provided text</td></tr>
+  </table>
+
+</div>
+
+</body>
+</html>
