@@ -880,8 +880,8 @@ const state = {
   selectedRoom: null,
   selectedLecturer: null,
   selectedCourse: null,
-  weights: { roomFit: 5, lecturerPref: 5, spread: 5, noBackToBack: 5 },
-  nextId: { room: 6, lecturer: 5, course: 9 },
+  weights: { roomFit: 5, lecturerPref: 5, spread: 8, noBackToBack: 5 },
+  nextId: { room: 7, lecturer: 7, course: 15 },
   totalScore: 0,
   unscheduled: []
 };
@@ -892,27 +892,36 @@ state.rooms = [
   { id: 2, name: 'Hall B', capacity: 80, type: 'lecture' },
   { id: 3, name: 'Room 101', capacity: 40, type: 'seminar' },
   { id: 4, name: 'Room 102', capacity: 30, type: 'seminar' },
-  { id: 5, name: 'Lab 1', capacity: 25, type: 'lab' }
+  { id: 5, name: 'Lab 1', capacity: 25, type: 'lab' },
+  { id: 6, name: 'Lab 2', capacity: 30, type: 'lab' }
 ];
 
 // Sample Lecturers
 state.lecturers = [
-  { id: 1, name: 'Dr. Smith', prefStart: 8, prefEnd: 12, maxHoursPerDay: 4 },
+  { id: 1, name: 'Dr. Smith', prefStart: 8, prefEnd: 12, maxHoursPerDay: 6 },
   { id: 2, name: 'Prof. Lee', prefStart: 12, prefEnd: 17, maxHoursPerDay: 6 },
-  { id: 3, name: 'Dr. Patel', prefStart: 9, prefEnd: 14, maxHoursPerDay: 4 },
-  { id: 4, name: 'Prof. Garcia', prefStart: 8, prefEnd: 18, maxHoursPerDay: 6 }
+  { id: 3, name: 'Dr. Patel', prefStart: 9, prefEnd: 14, maxHoursPerDay: 6 },
+  { id: 4, name: 'Prof. Garcia', prefStart: 8, prefEnd: 18, maxHoursPerDay: 6 },
+  { id: 5, name: 'Dr. Chen', prefStart: 10, prefEnd: 16, maxHoursPerDay: 6 },
+  { id: 6, name: 'Prof. Wong', prefStart: 8, prefEnd: 14, maxHoursPerDay: 6 }
 ];
 
 // Sample Courses
 state.courses = [
   { id: 1, name: 'Intro to CS', enrolled: 100, roomType: 'lecture', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 1 },
-  { id: 2, name: 'Data Structures', enrolled: 75, roomType: 'lecture', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 2 },
-  { id: 3, name: 'Algorithms', enrolled: 60, roomType: 'lecture', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 1 },
+  { id: 2, name: 'Data Structures', enrolled: 75, roomType: 'lecture', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 2 },
+  { id: 3, name: 'Algorithms', enrolled: 60, roomType: 'lecture', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 1 },
   { id: 4, name: 'Database Systems', enrolled: 35, roomType: 'seminar', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 3 },
-  { id: 5, name: 'AI Fundamentals', enrolled: 30, roomType: 'seminar', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 4 },
-  { id: 6, name: 'Programming Lab', enrolled: 20, roomType: 'lab', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 2 },
-  { id: 7, name: 'Web Development', enrolled: 25, roomType: 'lab', sessionsPerWeek: 1, hoursPerSession: 2, lecturerId: 3 },
-  { id: 8, name: 'Software Eng', enrolled: 40, roomType: 'seminar', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 4 }
+  { id: 5, name: 'AI Fundamentals', enrolled: 30, roomType: 'seminar', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 4 },
+  { id: 6, name: 'Programming Lab', enrolled: 20, roomType: 'lab', sessionsPerWeek: 3, hoursPerSession: 2, lecturerId: 2 },
+  { id: 7, name: 'Web Development', enrolled: 25, roomType: 'lab', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 3 },
+  { id: 8, name: 'Software Eng', enrolled: 40, roomType: 'seminar', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 4 },
+  { id: 9, name: 'Computer Networks', enrolled: 70, roomType: 'lecture', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 5 },
+  { id: 10, name: 'Operating Systems', enrolled: 65, roomType: 'lecture', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 6 },
+  { id: 11, name: 'Cybersecurity', enrolled: 35, roomType: 'seminar', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 5 },
+  { id: 12, name: 'Machine Learning', enrolled: 28, roomType: 'lab', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 6 },
+  { id: 13, name: 'Cloud Computing', enrolled: 30, roomType: 'seminar', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 5 },
+  { id: 14, name: 'Mobile App Dev', enrolled: 22, roomType: 'lab', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 4 }
 ];
 
 /* ============================================================
