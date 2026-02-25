@@ -1373,12 +1373,7 @@ function showCourseDetail(courseId) {
   document.body.appendChild(panel);
 }
 
-// Click anywhere outside blocks to deselect
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.class-block') && !e.target.closest('.course-detail-panel')) {
-    deselectCourse();
-  }
-});
+// Deselect listener is added in DOMContentLoaded init block
 
 /* ============================================================
    TIMETABLE RENDERING
@@ -1464,8 +1459,7 @@ function renderFilteredGrid(container, filteredSchedule) {
     const tooltipText = `${course.name}\n${room.name} (${room.capacity} seats)\n${lecName}\nEnrolled: ${course.enrolled}\nScore: ${entry.softScore.toFixed(1)}`;
     block.setAttribute('data-tooltip', tooltipText);
 
-    block.addEventListener('click', (e) => {
-      e.stopPropagation();
+    block.addEventListener('click', () => {
       selectCourse(course.id);
     });
 
@@ -1852,6 +1846,15 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRoomList();
   renderLecturerList();
   renderCourseList();
+
+  // Click outside blocks/panel to deselect course
+  document.getElementById('main-area').addEventListener('click', (e) => {
+    if (state.selectedCourse !== null &&
+        !e.target.closest('.class-block') &&
+        !e.target.closest('.course-detail-panel')) {
+      deselectCourse();
+    }
+  });
 });
 </script>
 
