@@ -492,7 +492,109 @@
     overflow: hidden;
     color: #1a1a1a;
     font-weight: 500;
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    transition: border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
+  }
+  .class-block.highlighted {
+    border-color: #fff;
+    box-shadow: 0 0 8px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.4);
+    z-index: 5;
+  }
+  .class-block.dimmed {
+    opacity: 0.3;
+  }
+
+  /* Course detail panel */
+  .course-detail-panel {
+    position: fixed;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+    width: 280px;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 20px;
+    z-index: 200;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    color: var(--text);
+    animation: slideIn 0.15s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+    to { opacity: 1; transform: translateY(-50%) translateX(0); }
+  }
+  .course-detail-panel h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .course-detail-panel .detail-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .course-detail-panel .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .course-detail-panel .detail-row:last-child {
+    border-bottom: none;
+  }
+  .course-detail-panel .detail-label {
+    color: var(--text-secondary);
+  }
+  .course-detail-panel .detail-value {
+    font-weight: 600;
+    text-align: right;
+  }
+  .course-detail-panel .detail-sessions {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .course-detail-panel .detail-sessions h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .course-detail-panel .session-item {
+    font-size: 12px;
+    padding: 4px 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .course-detail-panel .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .course-detail-panel .close-btn:hover {
+    background: var(--surface);
+    color: var(--text);
   }
   .class-block strong {
     font-size: 11px;
@@ -777,6 +879,7 @@ const state = {
   currentView: 'grid',
   selectedRoom: null,
   selectedLecturer: null,
+  selectedCourse: null,
   weights: { roomFit: 5, lecturerPref: 5, spread: 5, noBackToBack: 5 },
   nextId: { room: 6, lecturer: 5, course: 9 },
   totalScore: 0,
@@ -1192,6 +1295,92 @@ function escapeHtml(str) {
 }
 
 /* ============================================================
+   COURSE SELECTION
+   ============================================================ */
+
+function selectCourse(courseId) {
+  // If already selected, deselect
+  if (state.selectedCourse === courseId) {
+    deselectCourse();
+    return;
+  }
+  state.selectedCourse = courseId;
+
+  // Highlight matching blocks, dim others
+  document.querySelectorAll('.class-block').forEach(block => {
+    if (parseInt(block.dataset.courseId) === courseId) {
+      block.classList.add('highlighted');
+      block.classList.remove('dimmed');
+    } else {
+      block.classList.remove('highlighted');
+      block.classList.add('dimmed');
+    }
+  });
+
+  // Show detail panel
+  showCourseDetail(courseId);
+}
+
+function deselectCourse() {
+  state.selectedCourse = null;
+  document.querySelectorAll('.class-block').forEach(block => {
+    block.classList.remove('highlighted', 'dimmed');
+  });
+  const panel = document.querySelector('.course-detail-panel');
+  if (panel) panel.remove();
+}
+
+function showCourseDetail(courseId) {
+  // Remove existing panel
+  const existing = document.querySelector('.course-detail-panel');
+  if (existing) existing.remove();
+
+  const course = state.courses.find(c => c.id === courseId);
+  if (!course) return;
+
+  const lecturer = state.lecturers.find(l => l.id === course.lecturerId);
+  const color = PASTEL_COLORS[(course.id - 1) % PASTEL_COLORS.length];
+  const sessions = state.schedule.filter(s => s.courseId === courseId);
+
+  const panel = document.createElement('div');
+  panel.className = 'course-detail-panel';
+
+  let sessionsHtml = sessions.map(s => {
+    const room = state.rooms.find(r => r.id === s.roomId);
+    const roomName = room ? room.name : 'Unknown';
+    const endHour = s.startHour + s.duration;
+    return `<div class="session-item">${s.day} ${formatHour(s.startHour)} – ${formatHour(endHour)} · ${escapeHtml(roomName)}</div>`;
+  }).join('');
+
+  const avgScore = sessions.length > 0
+    ? (sessions.reduce((sum, s) => sum + s.softScore, 0) / sessions.length).toFixed(1)
+    : '–';
+
+  panel.innerHTML = `
+    <button class="close-btn" onclick="deselectCourse()">&times;</button>
+    <h3><span class="detail-color" style="background:${color}"></span>${escapeHtml(course.name)}</h3>
+    <div class="detail-row"><span class="detail-label">Lecturer</span><span class="detail-value">${lecturer ? escapeHtml(lecturer.name) : 'Unassigned'}</span></div>
+    <div class="detail-row"><span class="detail-label">Enrolled</span><span class="detail-value">${course.enrolled} students</span></div>
+    <div class="detail-row"><span class="detail-label">Room Type</span><span class="detail-value">${course.roomType}</span></div>
+    <div class="detail-row"><span class="detail-label">Sessions/Week</span><span class="detail-value">${course.sessionsPerWeek} × ${course.hoursPerSession}hr</span></div>
+    <div class="detail-row"><span class="detail-label">Avg Score</span><span class="detail-value">${avgScore}</span></div>
+    <div class="detail-sessions">
+      <h4>Scheduled Sessions</h4>
+      ${sessionsHtml}
+    </div>
+  `;
+
+  document.body.appendChild(panel);
+}
+
+// Click anywhere outside blocks to deselect
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.class-block') && !e.target.closest('.course-detail-panel')) {
+    deselectCourse();
+  }
+});
+
+/* ============================================================
    TIMETABLE RENDERING
    ============================================================ */
 
@@ -1261,6 +1450,7 @@ function renderFilteredGrid(container, filteredSchedule) {
     const block = document.createElement('div');
     block.className = 'class-block';
     block.style.backgroundColor = color;
+    block.dataset.courseId = course.id;
 
     // For multi-hour blocks, extend height: 50px per hour + 1px gap between rows - padding
     if (entry.duration > 1) {
@@ -1273,6 +1463,11 @@ function renderFilteredGrid(container, filteredSchedule) {
 
     const tooltipText = `${course.name}\n${room.name} (${room.capacity} seats)\n${lecName}\nEnrolled: ${course.enrolled}\nScore: ${entry.softScore.toFixed(1)}`;
     block.setAttribute('data-tooltip', tooltipText);
+
+    block.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectCourse(course.id);
+    });
 
     cell.appendChild(block);
   });
