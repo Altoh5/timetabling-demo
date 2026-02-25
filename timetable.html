@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>University Timetable Scheduler</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --sidebar-bg: #242424;
+    --primary: #c41230;
+    --primary-hover: #a00f28;
+    --primary-light: rgba(196, 18, 48, 0.15);
+    --danger: #ff4d4d;
+    --surface: #2a2a2a;
+    --surface-hover: #333333;
+    --border: #3a3a3a;
+    --text: #e8e8e8;
+    --text-secondary: #999;
+    --text-muted: #666;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Layout */
+  .app-wrapper {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: 60px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Top Bar */
+  .top-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    background: #111;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+
+  .top-bar-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-right: auto;
+  }
+
+  .sit-logo {
+    flex-shrink: 0;
+  }
+
+  .top-bar h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: rgba(255,255,255,0.85);
+    border-left: 1px solid rgba(255,255,255,0.15);
+    padding-left: 16px;
+  }
+
+  #generate-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  #generate-btn:hover {
+    background: var(--primary-hover);
+  }
+
+  #generate-btn:active {
+    transform: scale(0.97);
+  }
+
+  .view-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .view-btn:hover {
+    color: #fff;
+    border-color: #555;
+    background: var(--surface);
+  }
+
+  .view-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  #score-display {
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 8px;
+    padding: 4px 14px;
+    background: var(--primary-light);
+    border: 1px solid rgba(196, 18, 48, 0.3);
+    border-radius: 12px;
+    color: #ff8a9a;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .sidebar-tab {
+    flex: 1;
+    padding: 12px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .sidebar-tab:hover {
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .sidebar-tab.active {
+    color: #fff;
+    border-bottom-color: var(--primary);
+  }
+
+  .tab-content {
+    display: none;
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Form Styles */
+  .form-group {
+    margin-bottom: 10px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+
+  .form-group input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn-add {
+    width: 100%;
+    padding: 9px 16px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+
+  .btn-add:hover {
+    background: var(--primary-hover);
+  }
+
+  .form-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  /* Item List */
+  .item-list {
+    list-style: none;
+  }
+
+  .item-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    background: var(--surface);
+    border: 1px solid transparent;
+    transition: all 0.1s;
+  }
+
+  .item-list li:hover {
+    background: var(--surface-hover);
+    border-color: var(--border);
+  }
+
+  .item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .item-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .item-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .btn-edit, .btn-delete {
+    padding: 3px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-edit {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-secondary);
+  }
+
+  .btn-edit:hover {
+    background: rgba(255,255,255,0.15);
+    color: var(--text);
+  }
+
+  .btn-delete {
+    background: rgba(196, 18, 48, 0.15);
+    color: #ff6b7a;
+  }
+
+  .btn-delete:hover {
+    background: rgba(196, 18, 48, 0.3);
+    color: #ff8a96;
+  }
+
+  /* Settings Section */
+  .settings-section {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    background: #1e1e1e;
+    flex-shrink: 0;
+  }
+
+  .settings-section h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  .slider-group {
+    margin-bottom: 10px;
+  }
+
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .slider-group label span {
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .slider-group input[type="range"] {
+    width: 100%;
+    height: 4px;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .slider-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  .slider-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  .slider-group input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* Main Area */
+  #main-area {
+    overflow: auto;
+    padding: 20px;
+    background: var(--bg);
+  }
+
+  /* Warning Banner */
+  #warning-banner {
+    background: rgba(196, 18, 48, 0.1);
+    border-left: 4px solid var(--primary);
+    padding: 12px;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #ff8a96;
+    display: none;
+  }
+
+  #warning-banner.visible {
+    display: block;
+  }
+
+  #warning-banner ul {
+    margin: 6px 0 0 16px;
+  }
+
+  #timetable-container {
+    min-height: 200px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-muted);
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+
+  /* Timetable Grid */
+  .timetable-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .grid-header {
+    background: var(--primary);
+    color: white;
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+  .grid-corner {
+    background: #2d2d2d;
+    color: var(--text-secondary);
+  }
+  .grid-time {
+    background: #222;
+    padding: 8px;
+    text-align: right;
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .grid-cell {
+    background: #1e1e1e;
+    min-height: 50px;
+    position: relative;
+    padding: 2px;
+  }
+  .class-block {
+    border-radius: 5px;
+    padding: 4px 6px;
+    font-size: 11px;
+    line-height: 1.3;
+    cursor: pointer;
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    z-index: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    overflow: hidden;
+    color: #1a1a1a;
+    font-weight: 500;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .class-block strong {
+    font-size: 11px;
+    font-weight: 700;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Tooltip */
+  .class-block:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: pre-line;
+    z-index: 100;
+    pointer-events: none;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    border: 1px solid #333;
+  }
+  /* View selector dropdown */
+  .view-selector {
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  /* Scrollbar */
+  #sidebar::-webkit-scrollbar,
+  #main-area::-webkit-scrollbar,
+  .tab-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #sidebar::-webkit-scrollbar-thumb,
+  #main-area::-webkit-scrollbar-thumb,
+  .tab-content::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+  }
+
+  #sidebar::-webkit-scrollbar-track,
+  #main-area::-webkit-scrollbar-track,
+  .tab-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Color Legend */
+  .color-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 12px 0;
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Utilization display */
+  #utilization-display {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <svg class="sit-logo" width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- S -->
+        <path d="M2 30.5C2 30.5 4.5 33 10 33C15.5 33 18 30.5 18 27.5C18 24.5 15.5 23 10 21.5C4.5 20 2 18.5 2 15C2 11.5 5 8.5 10.5 8.5C16 8.5 18.5 11 18.5 11" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <!-- I stem -->
+        <rect x="25" y="14" width="4" height="19" rx="0.5" fill="white"/>
+        <!-- I dot (red square) -->
+        <rect x="24" y="7.5" width="6" height="6" rx="0.5" fill="#C41230"/>
+        <!-- T -->
+        <path d="M36 9L52 9" stroke="white" stroke-width="4" stroke-linecap="round"/>
+        <rect x="42" y="9" width="4" height="24" rx="0.5" fill="white"/>
+        <!-- SINGAPORE -->
+        <text x="60" y="14" fill="rgba(255,255,255,0.9)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="7" font-weight="600" letter-spacing="0.5">SINGAPORE</text>
+        <!-- INSTITUTE OF -->
+        <text x="60" y="23" fill="rgba(255,255,255,0.9)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="7" font-weight="600" letter-spacing="0.5">INSTITUTE OF</text>
+        <!-- TECHNOLOGY -->
+        <text x="60" y="32" fill="rgba(255,255,255,0.9)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="7" font-weight="600" letter-spacing="0.5">TECHNOLOGY</text>
+      </svg>
+      <h1>Timetable Scheduler</h1>
+    </div>
+    <button id="generate-btn">Generate Timetable</button>
+    <button class="view-btn active" data-view="grid">Weekly Grid</button>
+    <button class="view-btn" data-view="room">By Room</button>
+    <button class="view-btn" data-view="lecturer">By Lecturer</button>
+    <span id="score-display">Score: --</span>
+    <span id="utilization-display"></span>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" data-tab="tab-rooms">Rooms</button>
+      <button class="sidebar-tab" data-tab="tab-lecturers">Lecturers</button>
+      <button class="sidebar-tab" data-tab="tab-courses">Courses</button>
+    </div>
+
+    <!-- Rooms Tab -->
+    <div id="tab-rooms" class="tab-content active">
+      <div class="form-group">
+        <label for="room-name">Room Name</label>
+        <input type="text" id="room-name" placeholder="e.g. Hall C">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="room-capacity">Capacity</label>
+          <input type="number" id="room-capacity" min="1" placeholder="50">
+        </div>
+        <div class="form-group">
+          <label for="room-type">Type</label>
+          <select id="room-type">
+            <option value="lecture">Lecture</option>
+            <option value="lab">Lab</option>
+            <option value="seminar">Seminar</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-add" id="btn-add-room" onclick="addRoom()">Add Room</button>
+      <hr class="form-divider">
+      <ul class="item-list" id="room-list"></ul>
+    </div>
+
+    <!-- Lecturers Tab -->
+    <div id="tab-lecturers" class="tab-content">
+      <div class="form-group">
+        <label for="lecturer-name">Lecturer Name</label>
+        <input type="text" id="lecturer-name" placeholder="e.g. Dr. Johnson">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lecturer-pref-start">Pref. Start</label>
+          <select id="lecturer-pref-start"></select>
+        </div>
+        <div class="form-group">
+          <label for="lecturer-pref-end">Pref. End</label>
+          <select id="lecturer-pref-end"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="lecturer-max-hours">Max Hours/Day</label>
+        <input type="number" id="lecturer-max-hours" min="1" max="8" value="4">
+      </div>
+      <button class="btn-add" id="btn-add-lecturer" onclick="addLecturer()">Add Lecturer</button>
+      <hr class="form-divider">
+      <ul class="item-list" id="lecturer-list"></ul>
+    </div>
+
+    <!-- Courses Tab -->
+    <div id="tab-courses" class="tab-content">
+      <div class="form-group">
+        <label for="course-name">Course Name</label>
+        <input type="text" id="course-name" placeholder="e.g. Machine Learning">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="course-enrolled">Enrolled</label>
+          <input type="number" id="course-enrolled" min="1" placeholder="30">
+        </div>
+        <div class="form-group">
+          <label for="course-room-type">Room Type</label>
+          <select id="course-room-type">
+            <option value="lecture">Lecture</option>
+            <option value="lab">Lab</option>
+            <option value="seminar">Seminar</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="course-sessions">Sessions/Week</label>
+          <input type="number" id="course-sessions" min="1" max="5" value="2">
+        </div>
+        <div class="form-group">
+          <label for="course-hours">Hours/Session</label>
+          <select id="course-hours">
+            <option value="1">1 hour</option>
+            <option value="2">2 hours</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="course-lecturer">Lecturer</label>
+        <select id="course-lecturer"></select>
+      </div>
+      <button class="btn-add" id="btn-add-course" onclick="addCourse()">Add Course</button>
+      <hr class="form-divider">
+      <ul class="item-list" id="course-list"></ul>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="settings-section">
+      <h3>Scheduling Weights</h3>
+      <div class="slider-group">
+        <label>Room Fit <span id="slider-room-fit-val">5</span></label>
+        <input type="range" id="slider-room-fit" min="1" max="10" value="5">
+      </div>
+      <div class="slider-group">
+        <label>Lecturer Preference <span id="slider-lecturer-pref-val">5</span></label>
+        <input type="range" id="slider-lecturer-pref" min="1" max="10" value="5">
+      </div>
+      <div class="slider-group">
+        <label>Spread <span id="slider-spread-val">5</span></label>
+        <input type="range" id="slider-spread" min="1" max="10" value="5">
+      </div>
+      <div class="slider-group">
+        <label>No Back-to-Back <span id="slider-no-back-to-back-val">5</span></label>
+        <input type="range" id="slider-no-back-to-back" min="1" max="10" value="5">
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Area -->
+  <div id="main-area">
+    <div id="warning-banner"></div>
+    <div id="timetable-container">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <p>Add your courses, rooms, and lecturers, then click <strong>Generate Timetable</strong> to create a schedule.</p>
+        <p style="font-size:12px; margin-top:4px;">Configure rooms, lecturers, and courses in the sidebar first</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA MODEL & STATE
+   ============================================================ */
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const START_HOUR = 8;
+const END_HOUR = 18;
+const PASTEL_COLORS = [
+  '#5ba4cf', '#b07cc6', '#e87f9e', '#d4a843', '#6abf69',
+  '#e08a5a', '#7caed4', '#c97b8b', '#c2785a', '#8db87c'
+];
+
+const state = {
+  rooms: [],
+  lecturers: [],
+  courses: [],
+  schedule: [],
+  currentView: 'grid',
+  selectedRoom: null,
+  selectedLecturer: null,
+  weights: { roomFit: 5, lecturerPref: 5, spread: 5, noBackToBack: 5 },
+  nextId: { room: 6, lecturer: 5, course: 9 },
+  totalScore: 0,
+  unscheduled: []
+};
+
+// Sample Rooms
+state.rooms = [
+  { id: 1, name: 'Hall A', capacity: 120, type: 'lecture' },
+  { id: 2, name: 'Hall B', capacity: 80, type: 'lecture' },
+  { id: 3, name: 'Room 101', capacity: 40, type: 'seminar' },
+  { id: 4, name: 'Room 102', capacity: 30, type: 'seminar' },
+  { id: 5, name: 'Lab 1', capacity: 25, type: 'lab' }
+];
+
+// Sample Lecturers
+state.lecturers = [
+  { id: 1, name: 'Dr. Smith', prefStart: 8, prefEnd: 12, maxHoursPerDay: 4 },
+  { id: 2, name: 'Prof. Lee', prefStart: 12, prefEnd: 17, maxHoursPerDay: 6 },
+  { id: 3, name: 'Dr. Patel', prefStart: 9, prefEnd: 14, maxHoursPerDay: 4 },
+  { id: 4, name: 'Prof. Garcia', prefStart: 8, prefEnd: 18, maxHoursPerDay: 6 }
+];
+
+// Sample Courses
+state.courses = [
+  { id: 1, name: 'Intro to CS', enrolled: 100, roomType: 'lecture', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 1 },
+  { id: 2, name: 'Data Structures', enrolled: 75, roomType: 'lecture', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 2 },
+  { id: 3, name: 'Algorithms', enrolled: 60, roomType: 'lecture', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 1 },
+  { id: 4, name: 'Database Systems', enrolled: 35, roomType: 'seminar', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 3 },
+  { id: 5, name: 'AI Fundamentals', enrolled: 30, roomType: 'seminar', sessionsPerWeek: 2, hoursPerSession: 1, lecturerId: 4 },
+  { id: 6, name: 'Programming Lab', enrolled: 20, roomType: 'lab', sessionsPerWeek: 2, hoursPerSession: 2, lecturerId: 2 },
+  { id: 7, name: 'Web Development', enrolled: 25, roomType: 'lab', sessionsPerWeek: 1, hoursPerSession: 2, lecturerId: 3 },
+  { id: 8, name: 'Software Eng', enrolled: 40, roomType: 'seminar', sessionsPerWeek: 3, hoursPerSession: 1, lecturerId: 4 }
+];
+
+/* ============================================================
+   EDITING STATE TRACKERS
+   ============================================================ */
+
+let editingRoomId = null;
+let editingLecturerId = null;
+let editingCourseId = null;
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+
+document.querySelectorAll('.sidebar-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================================================
+   VIEW TOGGLE
+   ============================================================ */
+
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.currentView = btn.dataset.view;
+    renderTimetable();
+  });
+});
+
+/* ============================================================
+   SLIDER HANDLING
+   ============================================================ */
+
+function initSliders() {
+  const sliderMap = {
+    'slider-room-fit': 'roomFit',
+    'slider-lecturer-pref': 'lecturerPref',
+    'slider-spread': 'spread',
+    'slider-no-back-to-back': 'noBackToBack'
+  };
+
+  Object.keys(sliderMap).forEach(sliderId => {
+    const slider = document.getElementById(sliderId);
+    const valSpan = document.getElementById(sliderId + '-val');
+    const weightKey = sliderMap[sliderId];
+
+    // Set initial value from state.weights
+    slider.value = state.weights[weightKey];
+    valSpan.textContent = state.weights[weightKey];
+
+    slider.addEventListener('input', () => {
+      const val = parseInt(slider.value);
+      valSpan.textContent = val;
+      state.weights[weightKey] = val;
+    });
+  });
+}
+
+/* ============================================================
+   POPULATE DROPDOWNS
+   ============================================================ */
+
+function populateLecturerHourDropdowns() {
+  const startSel = document.getElementById('lecturer-pref-start');
+  const endSel = document.getElementById('lecturer-pref-end');
+  startSel.innerHTML = '';
+  endSel.innerHTML = '';
+  for (let h = 8; h <= 17; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = formatHour(h);
+    startSel.appendChild(opt);
+  }
+  for (let h = 9; h <= 18; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = formatHour(h);
+    endSel.appendChild(opt);
+  }
+  startSel.value = 8;
+  endSel.value = 17;
+}
+
+function populateLecturerDropdown() {
+  const sel = document.getElementById('course-lecturer');
+  const currentVal = sel.value;
+  sel.innerHTML = '';
+  state.lecturers.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = l.name;
+    sel.appendChild(opt);
+  });
+  // Restore selection if still valid
+  if (currentVal && state.lecturers.some(l => l.id === parseInt(currentVal))) {
+    sel.value = currentVal;
+  }
+}
+
+function formatHour(h) {
+  if (h === 0 || h === 12) return 12 + (h === 0 ? ' AM' : ' PM');
+  return (h > 12 ? h - 12 : h) + (h >= 12 ? ' PM' : ' AM');
+}
+
+/* ============================================================
+   ROOMS CRUD
+   ============================================================ */
+
+function renderRoomList() {
+  const list = document.getElementById('room-list');
+  list.innerHTML = '';
+  state.rooms.forEach(room => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="item-info">
+        <div class="item-name">${escapeHtml(room.name)}</div>
+        <div class="item-meta">${room.type} &middot; capacity ${room.capacity}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit" onclick="editRoom(${room.id})">Edit</button>
+        <button class="btn-delete" onclick="deleteRoom(${room.id})">Delete</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function addRoom() {
+  const nameInput = document.getElementById('room-name');
+  const capInput = document.getElementById('room-capacity');
+  const typeInput = document.getElementById('room-type');
+
+  const name = nameInput.value.trim();
+  const capacity = parseInt(capInput.value);
+  const type = typeInput.value;
+
+  if (!name || !capacity || capacity < 1) return;
+
+  if (editingRoomId !== null) {
+    // Save edit
+    const room = state.rooms.find(r => r.id === editingRoomId);
+    if (room) {
+      room.name = name;
+      room.capacity = capacity;
+      room.type = type;
+    }
+    editingRoomId = null;
+    document.getElementById('btn-add-room').textContent = 'Add Room';
+  } else {
+    state.rooms.push({ id: state.nextId.room++, name, capacity, type });
+  }
+
+  nameInput.value = '';
+  capInput.value = '';
+  typeInput.value = 'lecture';
+  renderRoomList();
+}
+
+function deleteRoom(id) {
+  state.rooms = state.rooms.filter(r => r.id !== id);
+  if (editingRoomId === id) {
+    editingRoomId = null;
+    document.getElementById('btn-add-room').textContent = 'Add Room';
+    document.getElementById('room-name').value = '';
+    document.getElementById('room-capacity').value = '';
+    document.getElementById('room-type').value = 'lecture';
+  }
+  renderRoomList();
+}
+
+function editRoom(id) {
+  const room = state.rooms.find(r => r.id === id);
+  if (!room) return;
+
+  editingRoomId = id;
+  document.getElementById('room-name').value = room.name;
+  document.getElementById('room-capacity').value = room.capacity;
+  document.getElementById('room-type').value = room.type;
+  document.getElementById('btn-add-room').textContent = 'Save Room';
+}
+
+/* ============================================================
+   LECTURERS CRUD
+   ============================================================ */
+
+function renderLecturerList() {
+  const list = document.getElementById('lecturer-list');
+  list.innerHTML = '';
+  state.lecturers.forEach(lec => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="item-info">
+        <div class="item-name">${escapeHtml(lec.name)}</div>
+        <div class="item-meta">${formatHour(lec.prefStart)}&ndash;${formatHour(lec.prefEnd)} &middot; max ${lec.maxHoursPerDay}h/day</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit" onclick="editLecturer(${lec.id})">Edit</button>
+        <button class="btn-delete" onclick="deleteLecturer(${lec.id})">Delete</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function addLecturer() {
+  const nameInput = document.getElementById('lecturer-name');
+  const startInput = document.getElementById('lecturer-pref-start');
+  const endInput = document.getElementById('lecturer-pref-end');
+  const maxInput = document.getElementById('lecturer-max-hours');
+
+  const name = nameInput.value.trim();
+  const prefStart = parseInt(startInput.value);
+  const prefEnd = parseInt(endInput.value);
+  const maxHoursPerDay = parseInt(maxInput.value);
+
+  if (!name || prefEnd <= prefStart || !maxHoursPerDay || maxHoursPerDay < 1) return;
+
+  if (editingLecturerId !== null) {
+    const lec = state.lecturers.find(l => l.id === editingLecturerId);
+    if (lec) {
+      lec.name = name;
+      lec.prefStart = prefStart;
+      lec.prefEnd = prefEnd;
+      lec.maxHoursPerDay = maxHoursPerDay;
+    }
+    editingLecturerId = null;
+    document.getElementById('btn-add-lecturer').textContent = 'Add Lecturer';
+  } else {
+    state.lecturers.push({ id: state.nextId.lecturer++, name, prefStart, prefEnd, maxHoursPerDay });
+  }
+
+  nameInput.value = '';
+  startInput.value = 8;
+  endInput.value = 17;
+  maxInput.value = 4;
+  renderLecturerList();
+  populateLecturerDropdown();
+}
+
+function deleteLecturer(id) {
+  state.courses.forEach(c => {
+    if (c.lecturerId === id) c.lecturerId = null;
+  });
+  state.lecturers = state.lecturers.filter(l => l.id !== id);
+  if (editingLecturerId === id) {
+    editingLecturerId = null;
+    document.getElementById('btn-add-lecturer').textContent = 'Add Lecturer';
+    document.getElementById('lecturer-name').value = '';
+    document.getElementById('lecturer-pref-start').value = 8;
+    document.getElementById('lecturer-pref-end').value = 17;
+    document.getElementById('lecturer-max-hours').value = 4;
+  }
+  renderLecturerList();
+  renderCourseList();
+}
+
+function editLecturer(id) {
+  const lec = state.lecturers.find(l => l.id === id);
+  if (!lec) return;
+
+  editingLecturerId = id;
+  document.getElementById('lecturer-name').value = lec.name;
+  document.getElementById('lecturer-pref-start').value = lec.prefStart;
+  document.getElementById('lecturer-pref-end').value = lec.prefEnd;
+  document.getElementById('lecturer-max-hours').value = lec.maxHoursPerDay;
+  document.getElementById('btn-add-lecturer').textContent = 'Save Lecturer';
+}
+
+/* ============================================================
+   COURSES CRUD
+   ============================================================ */
+
+function renderCourseList() {
+  populateLecturerDropdown();
+  const list = document.getElementById('course-list');
+  list.innerHTML = '';
+  state.courses.forEach(course => {
+    const lecturer = state.lecturers.find(l => l.id === course.lecturerId);
+    const lecName = lecturer ? lecturer.name : 'Unassigned';
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="item-info">
+        <div class="item-name">${escapeHtml(course.name)}</div>
+        <div class="item-meta">${course.enrolled} students &middot; ${course.roomType} &middot; ${course.sessionsPerWeek}x${course.hoursPerSession}h &middot; ${escapeHtml(lecName)}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit" onclick="editCourse(${course.id})">Edit</button>
+        <button class="btn-delete" onclick="deleteCourse(${course.id})">Delete</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function addCourse() {
+  const nameInput = document.getElementById('course-name');
+  const enrolledInput = document.getElementById('course-enrolled');
+  const roomTypeInput = document.getElementById('course-room-type');
+  const sessionsInput = document.getElementById('course-sessions');
+  const hoursInput = document.getElementById('course-hours');
+  const lecturerInput = document.getElementById('course-lecturer');
+
+  const name = nameInput.value.trim();
+  const enrolled = parseInt(enrolledInput.value);
+  const roomType = roomTypeInput.value;
+  const sessionsPerWeek = parseInt(sessionsInput.value);
+  const hoursPerSession = parseInt(hoursInput.value);
+  const lecturerId = parseInt(lecturerInput.value);
+  if (isNaN(lecturerId)) return;
+
+  if (!name || !enrolled || enrolled < 1 || !sessionsPerWeek || sessionsPerWeek < 1) return;
+
+  if (editingCourseId !== null) {
+    const course = state.courses.find(c => c.id === editingCourseId);
+    if (course) {
+      course.name = name;
+      course.enrolled = enrolled;
+      course.roomType = roomType;
+      course.sessionsPerWeek = sessionsPerWeek;
+      course.hoursPerSession = hoursPerSession;
+      course.lecturerId = lecturerId;
+    }
+    editingCourseId = null;
+    document.getElementById('btn-add-course').textContent = 'Add Course';
+  } else {
+    state.courses.push({ id: state.nextId.course++, name, enrolled, roomType, sessionsPerWeek, hoursPerSession, lecturerId });
+  }
+
+  nameInput.value = '';
+  enrolledInput.value = '';
+  roomTypeInput.value = 'lecture';
+  sessionsInput.value = 2;
+  hoursInput.value = 1;
+  renderCourseList();
+}
+
+function deleteCourse(id) {
+  state.courses = state.courses.filter(c => c.id !== id);
+  if (editingCourseId === id) {
+    editingCourseId = null;
+    document.getElementById('btn-add-course').textContent = 'Add Course';
+    document.getElementById('course-name').value = '';
+    document.getElementById('course-enrolled').value = '';
+    document.getElementById('course-room-type').value = 'lecture';
+    document.getElementById('course-sessions').value = 2;
+    document.getElementById('course-hours').value = 1;
+  }
+  renderCourseList();
+}
+
+function editCourse(id) {
+  const course = state.courses.find(c => c.id === id);
+  if (!course) return;
+
+  editingCourseId = id;
+  document.getElementById('course-name').value = course.name;
+  document.getElementById('course-enrolled').value = course.enrolled;
+  document.getElementById('course-room-type').value = course.roomType;
+  document.getElementById('course-sessions').value = course.sessionsPerWeek;
+  document.getElementById('course-hours').value = course.hoursPerSession;
+  document.getElementById('course-lecturer').value = course.lecturerId;
+  document.getElementById('btn-add-course').textContent = 'Save Course';
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ============================================================
+   TIMETABLE RENDERING
+   ============================================================ */
+
+function renderTimetable() {
+  if (state.schedule.length === 0) return;
+  if (state.currentView === 'grid') renderWeeklyGrid();
+  else if (state.currentView === 'room') renderRoomView();
+  else if (state.currentView === 'lecturer') renderLecturerView();
+}
+
+function renderWeeklyGrid() {
+  const container = document.getElementById('timetable-container');
+  container.innerHTML = '';
+  renderFilteredGrid(container, state.schedule);
+}
+
+function renderFilteredGrid(container, filteredSchedule) {
+  const grid = document.createElement('div');
+  grid.className = 'timetable-grid';
+  grid.style.gridTemplateRows = `40px repeat(${END_HOUR - START_HOUR}, 50px)`;
+
+  // Header row: corner + day headers
+  const corner = document.createElement('div');
+  corner.className = 'grid-header grid-corner';
+  corner.textContent = 'Time';
+  grid.appendChild(corner);
+
+  DAYS.forEach(day => {
+    const header = document.createElement('div');
+    header.className = 'grid-header';
+    header.textContent = day;
+    grid.appendChild(header);
+  });
+
+  // Time rows: time label + 5 day cells per row
+  for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+    const timeLabel = document.createElement('div');
+    timeLabel.className = 'grid-time';
+    timeLabel.textContent = formatHour(hour);
+    grid.appendChild(timeLabel);
+
+    DAYS.forEach((day, dayIdx) => {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.dataset.day = day;
+      cell.dataset.hour = hour;
+      grid.appendChild(cell);
+    });
+  }
+
+  container.appendChild(grid);
+
+  // Place scheduled class blocks
+  filteredSchedule.forEach(entry => {
+    const course = state.courses.find(c => c.id === entry.courseId);
+    const room = state.rooms.find(r => r.id === entry.roomId);
+    const lecturer = course ? state.lecturers.find(l => l.id === course.lecturerId) : null;
+    if (!course || !room) return;
+
+    const color = PASTEL_COLORS[(course.id - 1) % PASTEL_COLORS.length];
+    const lecName = lecturer ? lecturer.name : 'Unassigned';
+
+    // Find the target cell by data attributes
+    const cell = grid.querySelector(`.grid-cell[data-day="${entry.day}"][data-hour="${entry.startHour}"]`);
+    if (!cell) return;
+
+    const block = document.createElement('div');
+    block.className = 'class-block';
+    block.style.backgroundColor = color;
+
+    // For multi-hour blocks, extend height: 50px per hour + 1px gap between rows - padding
+    if (entry.duration > 1) {
+      block.style.height = (entry.duration * 51 - 5) + 'px';
+    } else {
+      block.style.height = '46px';
+    }
+
+    block.innerHTML = `<strong>${escapeHtml(course.name)}</strong>${escapeHtml(room.name)} &middot; ${escapeHtml(lecName)}`;
+
+    const tooltipText = `${course.name}\n${room.name} (${room.capacity} seats)\n${lecName}\nEnrolled: ${course.enrolled}\nScore: ${entry.softScore.toFixed(1)}`;
+    block.setAttribute('data-tooltip', tooltipText);
+
+    cell.appendChild(block);
+  });
+
+  // Color legend — only courses actually in the filtered schedule
+  const scheduledCourseIds = [...new Set(filteredSchedule.map(e => e.courseId))];
+  if (scheduledCourseIds.length > 0) {
+    const legend = document.createElement('div');
+    legend.className = 'color-legend';
+    scheduledCourseIds.forEach(cId => {
+      const course = state.courses.find(c => c.id === cId);
+      if (!course) return;
+      const color = PASTEL_COLORS[(course.id - 1) % PASTEL_COLORS.length];
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = `<span class="legend-swatch" style="background-color:${color}"></span>${escapeHtml(course.name)}`;
+      legend.appendChild(item);
+    });
+    container.appendChild(legend);
+  }
+}
+
+function renderRoomView() {
+  const container = document.getElementById('timetable-container');
+  container.innerHTML = '';
+
+  // Dropdown
+  const select = document.createElement('select');
+  select.className = 'view-selector';
+  state.rooms.forEach(room => {
+    const opt = document.createElement('option');
+    opt.value = room.id;
+    opt.textContent = `${room.name} (${room.type}, ${room.capacity} seats)`;
+    select.appendChild(opt);
+  });
+
+  // Set default selection
+  if (state.selectedRoom && state.rooms.some(r => r.id === state.selectedRoom)) {
+    select.value = state.selectedRoom;
+  } else if (state.rooms.length > 0) {
+    state.selectedRoom = state.rooms[0].id;
+    select.value = state.selectedRoom;
+  }
+
+  select.addEventListener('change', () => {
+    state.selectedRoom = parseInt(select.value);
+    renderRoomView();
+  });
+
+  container.appendChild(select);
+
+  // Filter schedule by selected room
+  const selectedRoomId = state.selectedRoom;
+  const filtered = state.schedule.filter(entry => entry.roomId === selectedRoomId);
+
+  // Render filtered grid
+  const gridContainer = document.createElement('div');
+  container.appendChild(gridContainer);
+  renderFilteredGrid(gridContainer, filtered);
+}
+
+function renderLecturerView() {
+  const container = document.getElementById('timetable-container');
+  container.innerHTML = '';
+
+  // Dropdown
+  const select = document.createElement('select');
+  select.className = 'view-selector';
+  state.lecturers.forEach(lec => {
+    const opt = document.createElement('option');
+    opt.value = lec.id;
+    opt.textContent = lec.name;
+    select.appendChild(opt);
+  });
+
+  // Set default selection
+  if (state.selectedLecturer && state.lecturers.some(l => l.id === state.selectedLecturer)) {
+    select.value = state.selectedLecturer;
+  } else if (state.lecturers.length > 0) {
+    state.selectedLecturer = state.lecturers[0].id;
+    select.value = state.selectedLecturer;
+  }
+
+  select.addEventListener('change', () => {
+    state.selectedLecturer = parseInt(select.value);
+    renderLecturerView();
+  });
+
+  container.appendChild(select);
+
+  // Filter schedule by selected lecturer
+  const selectedLecId = state.selectedLecturer;
+  const filtered = state.schedule.filter(entry => {
+    const course = state.courses.find(c => c.id === entry.courseId);
+    return course && course.lecturerId === selectedLecId;
+  });
+
+  // Render filtered grid
+  const gridContainer = document.createElement('div');
+  container.appendChild(gridContainer);
+  renderFilteredGrid(gridContainer, filtered);
+}
+
+/* ============================================================
+   WARNINGS & SCORE DISPLAY
+   ============================================================ */
+
+function renderWarnings() {
+  const banner = document.getElementById('warning-banner');
+  if (state.unscheduled.length === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  const names = state.unscheduled.map(u => {
+    const c = state.courses.find(c => c.id === u.courseId);
+    return c ? `${c.name} (session ${u.sessionIndex + 1})` : `Unknown course (session ${u.sessionIndex + 1})`;
+  });
+  banner.textContent = 'Could not schedule: ' + names.join(', ');
+}
+
+function renderScore() {
+  document.getElementById('score-display').textContent = 'Quality Score: ' + state.totalScore.toFixed(1);
+}
+
+function renderUtilization() {
+  const display = document.getElementById('utilization-display');
+  if (state.schedule.length === 0) {
+    display.textContent = '';
+    return;
+  }
+  const usedRoomIds = new Set(state.schedule.map(e => e.roomId));
+  const roomsUsed = usedRoomIds.size;
+  const totalRooms = state.rooms.length;
+
+  let totalUtilization = 0;
+  state.schedule.forEach(entry => {
+    const course = state.courses.find(c => c.id === entry.courseId);
+    const room = state.rooms.find(r => r.id === entry.roomId);
+    if (course && room && room.capacity > 0) {
+      totalUtilization += (course.enrolled / room.capacity) * 100;
+    }
+  });
+  const avgUtilization = Math.round(totalUtilization / state.schedule.length);
+
+  display.textContent = `Rooms used: ${roomsUsed}/${totalRooms} · Avg utilization: ${avgUtilization}%`;
+}
+
+/* ============================================================
+   SCHEDULING ALGORITHM — Hard Constraint Checker
+   ============================================================ */
+
+function isValid(courseId, roomId, day, startHour, duration, schedule) {
+  const course = state.courses.find(c => c.id === courseId);
+  const room = state.rooms.find(r => r.id === roomId);
+  if (!course || !room) return false;
+
+  // Room type must match course's required roomType
+  if (room.type !== course.roomType) return false;
+
+  // Room capacity must accommodate enrolled students
+  if (room.capacity < course.enrolled) return false;
+
+  // Session must not exceed schedule end
+  if (startHour + duration > END_HOUR) return false;
+
+  // Check for room conflicts and lecturer conflicts on the same day
+  for (const entry of schedule) {
+    if (entry.day !== day) continue;
+
+    const entryEnd = entry.startHour + entry.duration;
+    const newEnd = startHour + duration;
+
+    // Room conflict: same room, overlapping time
+    if (entry.roomId === roomId) {
+      if (startHour < entryEnd && entry.startHour < newEnd) return false;
+    }
+
+    // Lecturer conflict: same lecturer, overlapping time
+    const entryCourse = state.courses.find(c => c.id === entry.courseId);
+    if (entryCourse && entryCourse.lecturerId === course.lecturerId) {
+      if (startHour < entryEnd && entry.startHour < newEnd) return false;
+    }
+  }
+
+  // Lecturer max hours/day check
+  const lecturer = state.lecturers.find(l => l.id === course.lecturerId);
+  if (!lecturer) return false;
+
+  let lecturerHoursOnDay = 0;
+  for (const entry of schedule) {
+    if (entry.day !== day) continue;
+    const entryCourse = state.courses.find(c => c.id === entry.courseId);
+    if (entryCourse && entryCourse.lecturerId === course.lecturerId) {
+      lecturerHoursOnDay += entry.duration;
+    }
+  }
+  if (lecturerHoursOnDay + duration > lecturer.maxHoursPerDay) return false;
+
+  return true;
+}
+
+/* ============================================================
+   SCHEDULING ALGORITHM — Soft Score Calculator
+   ============================================================ */
+
+function softScore(courseId, roomId, day, startHour, duration, schedule) {
+  const course = state.courses.find(c => c.id === courseId);
+  const room = state.rooms.find(r => r.id === roomId);
+  const lecturer = state.lecturers.find(l => l.id === course.lecturerId);
+  let score = 0;
+
+  // Room fit: penalize oversized rooms
+  score += state.weights.roomFit * (1 - (room.capacity - course.enrolled) / room.capacity);
+
+  // Lecturer preference: bonus if entire class falls within preferred window
+  if (lecturer && startHour >= lecturer.prefStart && (startHour + duration) <= lecturer.prefEnd) {
+    score += state.weights.lecturerPref;
+  }
+
+  // Spread: penalize multiple sessions of same course on same day
+  let sameCourseCount = 0;
+  for (const entry of schedule) {
+    if (entry.courseId === courseId && entry.day === day) {
+      sameCourseCount++;
+    }
+  }
+  score -= state.weights.spread * sameCourseCount;
+
+  // No back-to-back: penalize adjacent sessions for the same lecturer on same day
+  if (lecturer) {
+    const newEnd = startHour + duration;
+    for (const entry of schedule) {
+      if (entry.day !== day) continue;
+      const entryCourse = state.courses.find(c => c.id === entry.courseId);
+      if (!entryCourse || entryCourse.lecturerId !== course.lecturerId) continue;
+
+      const entryEnd = entry.startHour + entry.duration;
+      // Check if back-to-back (adjacent): one ends where the other starts
+      if (entryEnd === startHour || newEnd === entry.startHour) {
+        score -= state.weights.noBackToBack;
+      }
+    }
+  }
+
+  return score;
+}
+
+/* ============================================================
+   SCHEDULING ALGORITHM — Greedy Scheduler
+   ============================================================ */
+
+function generateSchedule() {
+  const schedule = [];
+  const unscheduled = [];
+
+  // Sort courses by difficulty: lab first, then seminar, then lecture
+  // Within same type, sort by enrolled desc, then sessionsPerWeek desc
+  const typeOrder = { lab: 0, seminar: 1, lecture: 2 };
+  const sortedCourses = [...state.courses].sort((a, b) => {
+    const typeA = typeOrder[a.roomType] !== undefined ? typeOrder[a.roomType] : 3;
+    const typeB = typeOrder[b.roomType] !== undefined ? typeOrder[b.roomType] : 3;
+    if (typeA !== typeB) return typeA - typeB;
+    if (b.enrolled !== a.enrolled) return b.enrolled - a.enrolled;
+    return b.sessionsPerWeek - a.sessionsPerWeek;
+  });
+
+  for (const course of sortedCourses) {
+    for (let session = 0; session < course.sessionsPerWeek; session++) {
+      let bestSlot = null;
+      let bestScore = -Infinity;
+
+      for (const day of DAYS) {
+        // Find compatible rooms: matching type AND capacity >= enrolled
+        const compatibleRooms = state.rooms.filter(
+          r => r.type === course.roomType && r.capacity >= course.enrolled
+        );
+
+        for (const room of compatibleRooms) {
+          for (let hour = START_HOUR; hour <= END_HOUR - course.hoursPerSession; hour++) {
+            if (isValid(course.id, room.id, day, hour, course.hoursPerSession, schedule)) {
+              const score = softScore(course.id, room.id, day, hour, course.hoursPerSession, schedule);
+              if (score > bestScore) {
+                bestScore = score;
+                bestSlot = { courseId: course.id, sessionIndex: session, roomId: room.id, day, startHour: hour, duration: course.hoursPerSession, softScore: score };
+              }
+            }
+          }
+        }
+      }
+
+      if (bestSlot) {
+        schedule.push(bestSlot);
+      } else {
+        unscheduled.push({ courseId: course.id, sessionIndex: session });
+      }
+    }
+  }
+
+  return { schedule, unscheduled };
+}
+
+/* ============================================================
+   LOCAL SEARCH OPTIMIZER
+   ============================================================ */
+
+function localSearch(schedule, maxIterations = 100) {
+  for (let iter = 0; iter < maxIterations; iter++) {
+    if (schedule.length === 0) break;
+
+    // Find the entry with the lowest softScore
+    let worstIdx = 0;
+    for (let i = 1; i < schedule.length; i++) {
+      if (schedule[i].softScore < schedule[worstIdx].softScore) {
+        worstIdx = i;
+      }
+    }
+
+    const worst = schedule[worstIdx];
+    const course = state.courses.find(c => c.id === worst.courseId);
+    if (!course) break;
+
+    // Remove the worst entry temporarily
+    const remaining = schedule.filter((_, idx) => idx !== worstIdx);
+
+    let bestSlot = null;
+    let bestScore = worst.softScore;
+
+    // Try all alternative (day, room, hour) combinations
+    for (const day of DAYS) {
+      const compatibleRooms = state.rooms.filter(
+        r => r.type === course.roomType && r.capacity >= course.enrolled
+      );
+
+      for (const room of compatibleRooms) {
+        for (let hour = START_HOUR; hour <= END_HOUR - course.hoursPerSession; hour++) {
+          if (isValid(course.id, room.id, day, hour, course.hoursPerSession, remaining)) {
+            const score = softScore(course.id, room.id, day, hour, course.hoursPerSession, remaining);
+            if (score > bestScore) {
+              bestScore = score;
+              bestSlot = { courseId: course.id, sessionIndex: worst.sessionIndex, roomId: room.id, day, startHour: hour, duration: course.hoursPerSession, softScore: score };
+            }
+          }
+        }
+      }
+    }
+
+    if (bestSlot) {
+      // Replace the worst entry with the better one
+      schedule[worstIdx] = bestSlot;
+    } else {
+      // No improvement found for the worst entry, stop
+      break;
+    }
+  }
+
+  return schedule;
+}
+
+/* ============================================================
+   GENERATE BUTTON
+   ============================================================ */
+
+document.getElementById('generate-btn').addEventListener('click', () => {
+  const result = generateSchedule();
+  state.schedule = localSearch(result.schedule);
+  state.unscheduled = result.unscheduled;
+  state.totalScore = state.schedule.reduce((sum, s) => sum + s.softScore, 0);
+  renderTimetable();
+  renderWarnings();
+  renderScore();
+  renderUtilization();
+});
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  populateLecturerHourDropdowns();
+  initSliders();
+  renderRoomList();
+  renderLecturerList();
+  renderCourseList();
+});
+</script>
+
+</body>
+</html>
